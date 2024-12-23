@@ -4,11 +4,12 @@ import {NewTodoItem} from '../TodoItem/NewTodoItem';
 import {TodoItem} from '../TodoItem/TodoItem';
 import {useData, useUpdateToDoItemPriority} from '../../data/hooks/useData';
 import {SearchInput} from './components/SearchInput';
+import {SortButtons} from "./components/PrioritySort";
 
 export const TodoItems = () => {
   const { mutate: updatePriority } = useUpdateToDoItemPriority();
   const [searchValue, setSearchValue] = useState('');
-
+  const [sortDirection, setSortDirection] = useState('none');
   const {data: todoItems, isLoading} = useData();
 
   if (!todoItems || isLoading) {
@@ -18,32 +19,49 @@ export const TodoItems = () => {
       </TodoItemsContainer>
     );
   }
+  const handleSortAsc = () => {
+    setSortDirection('asc');
+  };
+
+  const handleSortDesc = () => {
+    setSortDirection('desc');
+  };
 
   // Фукнция filter вызывает для каждого элемента переданный ей колбек
   // И формирует в filteredBySearchItems новый массив элементов, для которых колбек вернул true
-  // Для проверки вхождения подстроки в строку нужно использовать indexOf
   const filteredBySearchItems = todoItems.filter((todoItem) => {
-    // const clearedTodoItemTitle = очистка от пробелов + приведение к одному из регистров
-    // const clearedSearchValue = очистка от пробелов + приведение к одному из регистров
-    // const isSearched = проверка вхождения строки поиска в строку заголовка
-    // return isSearched
-    return true; // удалить после реализации фильтрации
+    const clearedTodoItemTitle = todoItem.title.toLowerCase().replace(/\s+/g, '');
+    const clearedSearchValue = searchValue.toLowerCase().replace(/\s+/g, '');
+    return clearedTodoItemTitle.indexOf(clearedSearchValue) !== -1;
   })
 
+  // сортировочка
+  const sortedItems = [...filteredBySearchItems].sort((a, b) => {
+    if (sortDirection === 'asc') {
+      return a.priority - b.priority;
+    } else if (sortDirection === 'desc') {
+      return b.priority - a.priority;
+    } else {
+      return 0;
+    }
+  });
 
-
-
-  const todoItemsElements = filteredBySearchItems.map((item, index) => {
+  const todoItemsElements = sortedItems.map((item, index) => {
     const handlePriorityChange = (newPriority) => {
-      updatePriority({ toDoId: item.id, newPriority }); // Используем mutate здесь
+      updatePriority({ toDoId: item.id, newPriority: newPriority });
     };
 
     return <TodoItem key={item.id} title={item.title} checked={item.isDone} todoId={item.id} priorityValue={item.priority} onPriorityChange={handlePriorityChange} />;
   });
 
+  const handleSearchValue = (newValue) => {
+    setSearchValue(newValue);
+  }
+
   return (
     <TodoItemsContainer>
-      <SearchInput value={searchValue} />
+      <SearchInput value={searchValue} setValue={handleSearchValue} />
+      <SortButtons onSortAsc={handleSortAsc} onSortDesc={handleSortDesc}/>
       {todoItemsElements}
       <NewTodoItem />
     </TodoItemsContainer>

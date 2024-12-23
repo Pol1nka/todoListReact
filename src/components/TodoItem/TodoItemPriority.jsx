@@ -26,6 +26,9 @@ const Select = styled.select`
         outline: none;
         box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
     }
+    &:hover{ 
+        cursor: pointer;
+    }
 `;
 
 
